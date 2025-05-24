@@ -1,0 +1,24 @@
+# ไม่ให้ push ไฟล์ model/weights ขนาดใหญ่
+ckpt/
+assets/
+*.pth
+*.pkl
+*.onnx
+*.safetensors
+
+# ไม่ให้ push ไฟล์ชั่วคราว
+*.log
+*.tmp
+*.cache
+*.bak
+
+# ไม่ให้ push venv/conda environment
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# ไม่ให้ push ไฟล์ OS/Editor
+.DS_Store
+.idea/
+.vscode/
