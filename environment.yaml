@@ -13,7 +13,9 @@ dependencies:
   - pip=23.3.1
 
   - pip:
-      - accelerate==0.25.0
+      - torch==2.0.1
+      - accelerate==0.21.0 
+      - peft==0.6.2
       - torchmetrics==1.2.1
       - tqdm==4.66.1
       - transformers==4.36.2
@@ -23,6 +25,7 @@ dependencies:
       - scipy==1.11.1
       - opencv-python
       - gradio==4.24.0
+      - gradio-client==0.14.0
       - fvcore
       - cloudpickle
       - omegaconf
@@ -30,3 +33,4 @@ dependencies:
       - basicsr
       - av
       - onnxruntime==1.16.2
+      - Pillow
