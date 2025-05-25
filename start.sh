@@ -20,5 +20,5 @@ wget -O ckpt/humanparsing/parsing_lip.onnx \
 wget -O ckpt/openpose/ckpts/body_pose_model.pth \
   "https://huggingface.co/yisol/IDM-VTON/resolve/main/openpose/ckpts/body_pose_model.pth"
 
-wget -O ckpt/image_encoder/ckpts/model.safetensors \
+wget -O ckpt/image_encoder/model.safetensors \
   "https://huggingface.co/yisol/IDM-VTON/resolve/main/image_encoder/model.safetensors"  
