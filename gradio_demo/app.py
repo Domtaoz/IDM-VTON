@@ -28,6 +28,25 @@ from torchvision.transforms.functional import to_pil_image
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
+def to_image(x):
+    # ถ้าเป็น dict ให้พยายามดึง image ออกมา
+    if isinstance(x, dict):
+        # key อาจจะเป็น 'image' หรือ 'img'
+        for k in ['image', 'img']:
+            if k in x and isinstance(x[k], Image.Image):
+                return x[k]
+        raise ValueError(f"Output dict does not contain an image: {x}")
+    # ถ้าเป็น list ที่มี dict ซ้อน
+    if isinstance(x, list) and len(x) > 0:
+        if isinstance(x[0], dict):
+            return to_image(x[0])
+        elif isinstance(x[0], Image.Image):
+            return x[0]
+    # ถ้าเป็น PIL.Image แล้ว
+    if isinstance(x, Image.Image):
+        return x
+    raise ValueError(f"Output is not an image: {type(x)}")
+
 def pil_to_binary_mask(pil_image, threshold=0):
     np_image = np.array(pil_image)
     grayscale_image = Image.fromarray(np_image).convert("L")
@@ -249,7 +268,12 @@ def start_tryon(imgs,garm_img,garment_des,is_checked,is_checked_crop,denoise_ste
         human_img_orig.paste(out_img, (int(left), int(top)))    
         return human_img_orig, mask_gray
     else:
-        return images[0], mask_gray
+        if is_checked_crop:
+            out_img = images[0].resize(crop_size)        
+            human_img_orig.paste(out_img, (int(left), int(top)))
+            return to_image(human_img_orig), to_image(mask_gray)
+        else:
+            return to_image(images[0]), to_image(mask_gray)
     # return images[0], mask_gray
 
 garm_list = os.listdir(os.path.join(example_path,"cloth"))
@@ -259,6 +283,8 @@ human_list = os.listdir(os.path.join(example_path,"human"))
 human_list_path = [os.path.join(example_path,"human",human) for human in human_list]
 
 human_ex_list = []
+for p in human_ex_list:
+    print(p, os.path.exists(p))
 for ex_human in human_list_path:
     human_ex_list.append(ex_human)
 
@@ -321,5 +347,5 @@ with image_blocks as demo:
             
 
 
-image_blocks.launch(share=True)
+image_blocks.launch(share=True, show_api=False)
 
