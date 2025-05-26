@@ -11,7 +11,7 @@ einops==0.7.0
 scipy==1.11.1
 opencv-python
 gradio==4.24.0
-gradio_client==0.8.1
+gradio_client==0.14.0
 huggingface_hub==0.19.4
 accelerate==0.21.0 
 peft==0.6.2
@@ -22,5 +22,5 @@ pycocotools
 basicsr
 av
 onnxruntime==1.16.2
-tensorflow==2.10
+# tensorflow==2.10
 

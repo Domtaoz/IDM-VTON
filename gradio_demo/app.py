@@ -125,6 +125,11 @@ pipe.unet_encoder = UNet_Encoder
 
 def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_steps,seed):
     
+    # guard เพื่อป้องกัน input ผิด type
+    if not isinstance(dict, dict):
+        from PIL import Image
+        return Image.new("RGB", (512, 512), color="white"), Image.new("RGB", (512, 512), color="black")
+
     openpose_model.preprocessor.body_estimation.model.to(device)
     pipe.to(device)
     pipe.unet_encoder.to(device)
