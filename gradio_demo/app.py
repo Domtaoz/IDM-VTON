@@ -259,11 +259,7 @@ human_list_path = [os.path.join(example_path,"human",human) for human in human_l
 
 human_ex_list = []
 for ex_human in human_list_path:
-    ex_dict= {}
-    ex_dict['background'] = ex_human
-    ex_dict['layers'] = None
-    ex_dict['composite'] = None
-    human_ex_list.append(ex_dict)
+    human_ex_list.append(ex_human)
 
 ##default human
 
