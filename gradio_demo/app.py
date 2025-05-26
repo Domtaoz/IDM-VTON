@@ -123,20 +123,20 @@ pipe = TryonPipeline.from_pretrained(
 )
 pipe.unet_encoder = UNet_Encoder
 
-def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_steps,seed):
+def start_tryon(imgs,garm_img,garment_des,is_checked,is_checked_crop,denoise_steps,seed):
     
-    print("DEBUG: dict type=", type(dict), "value=", dict)
-    # guard เพื่อป้องกัน input ผิด type
-    if not isinstance(dict, dict):
+    # ถ้าต้องการ mask ต้องแยกกรณีออกมาทีหลัง
+    if imgs is None:
         from PIL import Image
-        return Image.new("RGB", (512, 512), color="white"), Image.new("RGB", (512, 512), color="black")
+        imgs = Image.new("RGB", (512, 512), color="white")
+    human_img_orig = imgs.convert("RGB")
 
     openpose_model.preprocessor.body_estimation.model.to(device)
     pipe.to(device)
     pipe.unet_encoder.to(device)
 
     garm_img= garm_img.convert("RGB").resize((768,1024))
-    human_img_orig = dict["background"].convert("RGB")    
+    # human_img_orig = dict["background"].convert("RGB")    
     
     if is_checked_crop:
         width, height = human_img_orig.size
@@ -159,7 +159,8 @@ def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_ste
         mask, mask_gray = get_mask_location('hd', "upper_body", model_parse, keypoints)
         mask = mask.resize((768,1024))
     else:
-        mask = pil_to_binary_mask(dict['layers'][0].convert("RGB").resize((768, 1024)))
+        mask = pil_to_binary_mask(human_img)
+        # mask = pil_to_binary_mask(dict['layers'][0].convert("RGB").resize((768, 1024)))
         # mask = transforms.ToTensor()(mask)
         # mask = mask.unsqueeze(0)
     mask_gray = (1-transforms.ToTensor()(mask)) * tensor_transfrom(human_img)
