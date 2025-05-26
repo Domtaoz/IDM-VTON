@@ -233,6 +233,10 @@ def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_ste
                         guidance_scale=2.0,
                     )[0]
 
+    if images[0] is None or not isinstance(images[0], Image.Image):
+        images[0] = Image.new("RGB", (512, 512), color="white")
+    if mask_gray is None or not isinstance(mask_gray, Image.Image):
+        mask_gray = Image.new("RGB", (512, 512), color="black")
     if is_checked_crop:
         out_img = images[0].resize(crop_size)        
         human_img_orig.paste(out_img, (int(left), int(top)))    
@@ -287,10 +291,10 @@ with image_blocks as demo:
                 examples=garm_list_path)
         with gr.Column():
             # image_out = gr.Image(label="Output", elem_id="output-img", height=400)
-            masked_img = gr.Image(label="Masked image output", elem_id="masked-img",show_share_button=False)
+            masked_img = gr.Image(type="pil", label="Masked image output", elem_id="masked-img",show_share_button=False)
         with gr.Column():
             # image_out = gr.Image(label="Output", elem_id="output-img", height=400)
-            image_out = gr.Image(label="Output", elem_id="output-img",show_share_button=False)
+            image_out = gr.Image(type="pil", label="Output", elem_id="output-img",show_share_button=False)
 
 
 
@@ -304,7 +308,12 @@ with image_blocks as demo:
 
 
 
-    try_button.click(fn=start_tryon, inputs=[imgs, garm_img, prompt, is_checked,is_checked_crop, denoise_steps, seed], outputs=[image_out,masked_img], api_name='tryon')
+    try_button.click(
+        fn=start_tryon, 
+        inputs=[imgs, garm_img, prompt, is_checked,is_checked_crop, denoise_steps, seed], 
+        outputs=[image_out,masked_img], 
+        api_name='tryon'
+    )
 
             
 
