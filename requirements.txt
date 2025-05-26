@@ -16,9 +16,9 @@ gradio_client==0.14.0
 huggingface_hub==0.19.4
 accelerate==0.21.0 
 pydantic==2.10.6
-# fastapi==0.95.2
+fastapi==0.112.2
 uvicorn==0.21.1
-# starlette==0.27.0
+starlette==0.45.3
 peft==0.6.2
 fvcore
 cloudpickle
