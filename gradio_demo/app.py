@@ -125,6 +125,7 @@ pipe.unet_encoder = UNet_Encoder
 
 def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_steps,seed):
     
+    print("DEBUG: dict type=", type(dict), "value=", dict)
     # guard เพื่อป้องกัน input ผิด type
     if not isinstance(dict, dict):
         from PIL import Image
@@ -273,7 +274,7 @@ with image_blocks as demo:
     gr.Markdown("Virtual Try-on with your image and garment image. Check out the [source codes](https://github.com/yisol/IDM-VTON) and the [model](https://huggingface.co/yisol/IDM-VTON)")
     with gr.Row():
         with gr.Column():
-            imgs = gr.ImageEditor(sources='upload', type="pil", label='Human. Mask with pen or use auto-masking', interactive=True)
+            imgs = gr.Image(sources='upload', type="pil", label='Human. Mask with pen or use auto-masking', interactive=True)
             with gr.Row():
                 is_checked = gr.Checkbox(label="Yes", info="Use auto-generated mask (Takes 5 seconds)",value=True)
             with gr.Row():
@@ -316,8 +317,8 @@ with image_blocks as demo:
     try_button.click(
         fn=start_tryon, 
         inputs=[imgs, garm_img, prompt, is_checked,is_checked_crop, denoise_steps, seed], 
-        outputs=[image_out,masked_img], 
-        api_name='tryon'
+        outputs=[image_out,masked_img]
+        # api_name='tryon'
     )
 
             
