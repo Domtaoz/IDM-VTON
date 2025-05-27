@@ -11,8 +11,8 @@ einops==0.7.0
 # bitsandbytes==0.39.0
 scipy==1.11.1
 opencv-python
-gradio==4.24.0
-gradio_client==0.14.0
+# gradio==4.24.0
+# gradio_client==0.14.0
 huggingface_hub==0.19.4
 accelerate==0.21.0 
 # pydantic==2.10.6
