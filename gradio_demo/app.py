@@ -255,32 +255,33 @@ for ex_human in human_list_path:
     ex_dict['composite'] = None
     human_ex_list.append(ex_dict)
 
-##default human
 
 
-# iface = gr.Interface(
-#     fn=start_tryon,    # ฟังก์ชันหลักที่ประมวลผล (ต้องรับ parameter ตรงกับ inputs)
-#     inputs=[
-#         gr.Image(type="pil", label="Human. Mask with pen or use auto-masking"),
-#         gr.Image(type="pil", label="Garment"),
-#         gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts"),
-#         gr.Checkbox(label="Use auto-generated mask", value=True),
-#         gr.Checkbox(label="Use auto-crop & resizing", value=False),
-#         gr.Number(label="Denoising Steps", value=30, minimum=20, maximum=40, step=1),
-#         gr.Number(label="Seed", value=42, minimum=-1, maximum=2147483647, step=1)
-#     ],
-#     outputs=[
-#         gr.Image(label="Output"),
-#         gr.Image(label="Masked image output"),
-#     ],
-#     allow_flagging="never",
-#     live=False,
-#     title="IDM-VTON Try-On API",
-#     description="Try-On REST API for Virtual Try-On project.",
-#     show_api=True,   # <<< สำคัญที่สุด!
-# )
+iface = gr.Interface(
+    fn=start_tryon,    # ฟังก์ชันหลักที่ประมวลผล (ต้องรับ parameter ตรงกับ inputs)
+    inputs=[
+        gr.Image(type="pil", label="Human. Mask with pen or use auto-masking"),
+        gr.Image(type="pil", label="Garment"),
+        gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts"),
+        gr.Checkbox(label="Use auto-generated mask", value=True),
+        gr.Checkbox(label="Use auto-crop & resizing", value=False),
+        gr.Number(label="Denoising Steps", value=30, minimum=20, maximum=40, step=1),
+        gr.Number(label="Seed", value=42, minimum=-1, maximum=2147483647, step=1)
+    ],
+    outputs=[
+        gr.Image(label="Output"),
+        gr.Image(label="Masked image output"),
+    ],
+    allow_flagging="never",
+    live=False,
+    title="IDM-VTON Try-On API",
+    description="Try-On REST API for Virtual Try-On project.",
+    show_api=True   
+)
 
-# iface.launch(share=True)
+iface.launch(share=False)
+
+
 
 # image_blocks = gr.Blocks().queue()
 # with image_blocks as demo:
