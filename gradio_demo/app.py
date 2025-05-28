@@ -276,10 +276,10 @@ iface = gr.Interface(
     live=False,
     title="IDM-VTON Try-On API",
     description="Try-On REST API for Virtual Try-On project.",
-    show_api=True   
+    # show_api=True   
 )
 
-iface.launch(share=False)
+iface.launch(share=True)
 
 
 
