@@ -296,8 +296,8 @@ async def tryon_rest(
     result_b64 = pil_image_to_base64_str(result_img)
     mask_b64 = pil_image_to_base64_str(mask_img)
     # คืน base64 string ใน JSON
-    return JSONResponse({"result_image_base64": result_b64, "masked_image_base64": mask_b64})
-
+    return JSONResponse({"result_image_base64": result_b64})
+# , "masked_image_base64": mask_b64
 
 image_blocks = gr.Blocks().queue()
 with image_blocks as demo:
@@ -305,11 +305,11 @@ with image_blocks as demo:
     # gr.Markdown("Virtual Try-on with your image and garment image. Check out the [source codes](https://github.com/yisol/IDM-VTON) and the [model](https://huggingface.co/yisol/IDM-VTON)")
     with gr.Row():
         with gr.Column():
-            imgs = gr.ImageEditor(sources='upload', type="pil", label='Human. Mask with pen or use auto-masking', interactive=True)
-            with gr.Row():
-                is_checked = gr.Checkbox(label="Yes", info="Use auto-generated mask (Takes 5 seconds)",value=True)
-            with gr.Row():
-                is_checked_crop = gr.Checkbox(label="Yes", info="Use auto-crop & resizing",value=False)
+            imgs = gr.Image(sources='upload', type="pil", label='Human. Mask with pen or use auto-masking', interactive=True)
+            # with gr.Row():
+            is_checked = gr.Checkbox(label="Yes", info="Use auto-generated mask (Takes 5 seconds)",value=True)
+            # with gr.Row():
+            is_checked_crop = gr.Checkbox(label="Yes", info="Use auto-crop & resizing",value=False)
 
             # example = gr.Examples(
             #     inputs=imgs,
@@ -319,9 +319,10 @@ with image_blocks as demo:
 
         with gr.Column():
             garm_img = gr.Image(label="Garment", sources='upload', type="pil")
-            with gr.Row(elem_id="prompt-container"):
-                with gr.Row():
-                    prompt = gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts", show_label=False, elem_id="prompt")
+            # gr.ImageEditor
+            # with gr.Row(elem_id="prompt-container"):
+            #     with gr.Row():
+            prompt = gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts", show_label=False, elem_id="prompt")
             # example = gr.Examples(
             #     inputs=garm_img,
             #     examples_per_page=8,
