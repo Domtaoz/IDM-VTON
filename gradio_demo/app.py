@@ -33,6 +33,8 @@ from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 
 def pil_image_to_base64_str(img):
+    import io
+    import base64
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode('utf-8')
@@ -253,10 +255,10 @@ def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_ste
     if is_checked_crop:
         out_img = images[0].resize(crop_size)        
         human_img_orig.paste(out_img, (int(left), int(top)))    
-        return human_img_orig, mask_gray
+        result_img = human_img_orig
     else:
-        return images[0], mask_gray
-    # return images[0], mask_gray
+        result_img = images[0]
+    return pil_image_to_base64_str(result_img)
 
 garm_list = os.listdir(os.path.join(example_path,"cloth"))
 garm_list_path = [os.path.join(example_path,"cloth",garm) for garm in garm_list]
@@ -272,8 +274,7 @@ for ex_human in human_list_path:
     ex_dict['composite'] = None
     human_ex_list.append(ex_dict)
 
-
-app = FastAPI()
+app = FastAPI
 
 @app.post("/api/tryon")
 async def tryon_rest(
@@ -285,24 +286,15 @@ async def tryon_rest(
     denoise_steps: int = Form(30),
     seed: int = Form(42),
 ):
-    # อ่านไฟล์ภาพ
     img_pil = Image.open(io.BytesIO(await imgs.read()))
     garm_pil = Image.open(io.BytesIO(await garm_img.read()))
-    # เตรียม dict ให้ตรงกับที่ start_tryon รับ
     dict_obj = {"background": img_pil, "layers": [img_pil], "composite": None}
-    # แปลง string เป็น boolean
     mask_bool = is_checked.lower() == "true"
     crop_bool = is_checked_crop.lower() == "true"
-    # เรียกใช้ฟังก์ชันเดิม
-    result_img, mask_img = start_tryon(
+    result_b64 = start_tryon(
         dict_obj, garm_pil, prompt, mask_bool, crop_bool, denoise_steps, seed
     )
-    # แปลงเป็น base64 string
-    result_b64 = pil_image_to_base64_str(result_img)
-    mask_b64 = pil_image_to_base64_str(mask_img)
-    # คืน base64 string ใน JSON
-    return JSONResponse({"result_image_base64": result_b64})
-# , "masked_image_base64": mask_b64
+    return JSONResponse({"result_image_base64": result_b64})  
 
 image_blocks = gr.Blocks().queue()
 with image_blocks as demo:
@@ -356,7 +348,7 @@ with image_blocks as demo:
         inputs=[imgs, garm_img, prompt, 
         is_checked,is_checked_crop, 
         denoise_steps, seed], 
-        outputs=[image_out,masked_img], 
+        outputs=[image_out], 
         api_name='try'
     )
 
