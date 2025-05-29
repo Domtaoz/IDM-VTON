@@ -14,7 +14,9 @@ with open(image_path, "rb") as image_file:
 # Prefix สำหรับ JPG
 base64_str = "data:image/jpeg;base64," + encoded_string
 
-with open("output_base64.txt", "w") as out:
+# print(base64_str)
+
+with open("output.txt", "w") as out:
     out.write(base64_str)
 
 print("Base64 string saved to output_base64.txt")

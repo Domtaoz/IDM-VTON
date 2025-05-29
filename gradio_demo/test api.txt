@@ -1,0 +1,35 @@
+!pip install gradio==4.24.0
+!pip install gradio_client==0.14.0
+!pip install pydantic==2.10.6
+!pip install fastapi==0.112.2
+!pip install starlette==0.45.3
+
+import gradio as gr
+
+def return_first_image(image1):
+    return image1
+
+def return_first_text(img1):
+    return img1
+
+with gr.Blocks() as demo:
+    with gr.Row():
+        # img1 = gr.Image(label="Image 1")
+        # img2 = gr.Image(label="Image 2")
+        img1 = gr.Textbox(label="Text 1")
+        # img2 = gr.Textbox(label="Text 2")
+    btn = gr.Button("Submit")
+    # out = gr.Image(label="Output Image")
+    out = gr.Textbox(label="Output Text")
+
+    btn.click(return_first_text, inputs=[img1], outputs=out, api_name="test")
+
+demo.queue().launch(share=True)
+
+=================
+
+{
+  "data": ["kj", "ข้อความที่2"]
+}
+
+
