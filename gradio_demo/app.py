@@ -165,7 +165,12 @@ def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_ste
         mask, mask_gray = get_mask_location('hd', "upper_body", model_parse, keypoints)
         mask = mask.resize((768,1024))
     else:
-        mask = pil_to_binary_mask(dict['layers'][0].convert("RGB").resize((768, 1024)))
+        layer = dict['layers']
+        if isinstance(layer, list):
+            layer_img = layer[0]
+        else:
+            layer_img = layer
+        mask = pil_to_binary_mask(layer_img.convert("RGB").resize((768, 1024)))
         # mask = transforms.ToTensor()(mask)
         # mask = mask.unsqueeze(0)
     mask_gray = (1-transforms.ToTensor()(mask)) * tensor_transfrom(human_img)
@@ -305,7 +310,7 @@ with image_blocks as demo:
     # gr.Markdown("Virtual Try-on with your image and garment image. Check out the [source codes](https://github.com/yisol/IDM-VTON) and the [model](https://huggingface.co/yisol/IDM-VTON)")
     with gr.Row():
         with gr.Column():
-            imgs = gr.Image(sources='upload', type="pil", label='Human. Mask with pen or use auto-masking', interactive=True)
+            imgs = gr.ImageEditor(sources='upload', type="pil", label='Human. Mask with pen or use auto-masking', interactive=True)
             # with gr.Row():
             is_checked = gr.Checkbox(label="Yes", info="Use auto-generated mask (Takes 5 seconds)",value=True)
             # with gr.Row():
