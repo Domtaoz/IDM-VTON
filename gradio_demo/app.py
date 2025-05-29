@@ -352,8 +352,6 @@ with image_blocks as demo:
         api_name='try'
     )
 
-            
-
 
 image_blocks.launch(share=True)
 
