@@ -311,10 +311,10 @@ with image_blocks as demo:
     with gr.Row():
         with gr.Column():
             imgs = gr.ImageEditor(sources='upload', type="pil", label='Human. Mask with pen or use auto-masking', interactive=True)
-            # with gr.Row():
-            is_checked = gr.Checkbox(label="Yes", info="Use auto-generated mask (Takes 5 seconds)",value=True)
-            # with gr.Row():
-            is_checked_crop = gr.Checkbox(label="Yes", info="Use auto-crop & resizing",value=False)
+            with gr.Row():
+                is_checked = gr.Checkbox(label="Yes", info="Use auto-generated mask (Takes 5 seconds)",value=True)
+            with gr.Row():
+                is_checked_crop = gr.Checkbox(label="Yes", info="Use auto-crop & resizing",value=False)
 
             # example = gr.Examples(
             #     inputs=imgs,
@@ -325,16 +325,16 @@ with image_blocks as demo:
         with gr.Column():
             garm_img = gr.Image(label="Garment", sources='upload', type="pil")
             # gr.ImageEditor
-            # with gr.Row(elem_id="prompt-container"):
-            #     with gr.Row():
-            prompt = gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts", show_label=False, elem_id="prompt")
+            with gr.Row(elem_id="prompt-container"):
+                with gr.Row():
+                    prompt = gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts", show_label=False, elem_id="prompt")
             # example = gr.Examples(
             #     inputs=garm_img,
             #     examples_per_page=8,
             #     examples=garm_list_path)
-        # with gr.Column():
+        with gr.Column():
             # image_out = gr.Image(label="Output", elem_id="output-img", height=400)
-            # masked_img = gr.Image(label="Masked image output", elem_id="masked-img",show_share_button=False)
+            masked_img = gr.Image(label="Masked image output", elem_id="masked-img",show_share_button=False)
         with gr.Column():
             # image_out = gr.Image(label="Output", elem_id="output-img", height=400)
             image_out = gr.Image(label="Output", elem_id="output-img",show_share_button=False)
@@ -356,7 +356,7 @@ with image_blocks as demo:
         inputs=[imgs, garm_img, prompt, 
         is_checked,is_checked_crop, 
         denoise_steps, seed], 
-        outputs=[image_out], 
+        outputs=[image_out,masked_img], 
         api_name='try'
     )
 
