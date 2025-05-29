@@ -274,7 +274,7 @@ for ex_human in human_list_path:
     ex_dict['composite'] = None
     human_ex_list.append(ex_dict)
 
-app = FastAPI
+app = FastAPI()
 
 @app.post("/api/tryon")
 async def tryon_rest(
