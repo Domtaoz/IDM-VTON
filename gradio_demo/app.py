@@ -29,9 +29,6 @@ from torchvision.transforms.functional import to_pil_image
 import io
 import base64
 
-from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import JSONResponse
-
 def pil_image_to_base64_str(img):
     import io
     import base64
@@ -252,13 +249,20 @@ def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_ste
                         guidance_scale=2.0,
                     )[0]
 
+    # if is_checked_crop:
+    #     out_img = images[0].resize(crop_size)        
+    #     human_img_orig.paste(out_img, (int(left), int(top)))    
+    #     result_img = human_img_orig
+    # else:
+    #     result_img = images[0]
+    # return pil_image_to_base64_str(result_img)
+
     if is_checked_crop:
         out_img = images[0].resize(crop_size)        
         human_img_orig.paste(out_img, (int(left), int(top)))    
-        result_img = human_img_orig
+        return human_img_orig, mask_gray
     else:
-        result_img = images[0]
-    return pil_image_to_base64_str(result_img)
+        return images[0], mask_gray
 
 garm_list = os.listdir(os.path.join(example_path,"cloth"))
 garm_list_path = [os.path.join(example_path,"cloth",garm) for garm in garm_list]
@@ -274,6 +278,9 @@ for ex_human in human_list_path:
     ex_dict['composite'] = None
     human_ex_list.append(ex_dict)
 
+
+from fastapi import FastAPI, File, UploadFile, Form
+from fastapi.responses import JSONResponse
 app = FastAPI()
 
 @app.post("/api/tryon")
@@ -286,15 +293,25 @@ async def tryon_rest(
     denoise_steps: int = Form(30),
     seed: int = Form(42),
 ):
-    img_pil = Image.open(io.BytesIO(await imgs.read()))
-    garm_pil = Image.open(io.BytesIO(await garm_img.read()))
-    dict_obj = {"background": img_pil, "layers": [img_pil], "composite": None}
-    mask_bool = is_checked.lower() == "true"
-    crop_bool = is_checked_crop.lower() == "true"
-    result_b64 = start_tryon(
-        dict_obj, garm_pil, prompt, mask_bool, crop_bool, denoise_steps, seed
-    )
-    return JSONResponse({"result_image_base64": result_b64})  
+    import traceback
+    try:
+        img_pil = Image.open(io.BytesIO(await imgs.read()))
+        garm_pil = Image.open(io.BytesIO(await garm_img.read()))
+        dict_obj = {"background": img_pil, "layers": [img_pil], "composite": None}
+        mask_bool = is_checked.lower() == "true"
+        crop_bool = is_checked_crop.lower() == "true"
+        result_b64 = start_tryon(
+            dict_obj, garm_pil, prompt, mask_bool, crop_bool, denoise_steps, seed
+        )
+        # บังคับให้เป็น str
+        if isinstance(result_b64, bytes):
+            result_b64 = result_b64.decode('utf-8')
+        return JSONResponse({"result_image_base64": result_b64})
+    except Exception as e:
+        print(traceback.format_exc())
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 
 image_blocks = gr.Blocks().queue()
 with image_blocks as demo:
@@ -348,7 +365,7 @@ with image_blocks as demo:
         inputs=[imgs, garm_img, prompt, 
         is_checked,is_checked_crop, 
         denoise_steps, seed], 
-        outputs=[image_out], 
+        outputs=[image_out, masked_img], 
         api_name='try'
     )
 
