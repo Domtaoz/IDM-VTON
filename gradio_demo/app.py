@@ -26,6 +26,18 @@ from preprocess.openpose.run_openpose import OpenPose
 from detectron2.data.detection_utils import convert_PIL_to_numpy,_apply_exif_orientation
 from torchvision.transforms.functional import to_pil_image
 
+import io
+import base64
+
+from fastapi import FastAPI, File, UploadFile, Form
+from fastapi.responses import JSONResponse
+
+def pil_image_to_base64_str(img):
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return base64.b64encode(buf.getvalue()).decode('utf-8')
+
+
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 def pil_to_binary_mask(pil_image, threshold=0):
@@ -255,10 +267,42 @@ for ex_human in human_list_path:
     ex_dict['composite'] = None
     human_ex_list.append(ex_dict)
 
+
+app = FastAPI()
+
+@app.post("/api/tryon")
+async def tryon_rest(
+    imgs: UploadFile = File(...),
+    garm_img: UploadFile = File(...),
+    prompt: str = Form("Short Sleeve Round Neck T-shirts"),
+    is_checked: str = Form("true"),
+    is_checked_crop: str = Form("false"),
+    denoise_steps: int = Form(30),
+    seed: int = Form(42),
+):
+    # อ่านไฟล์ภาพ
+    img_pil = Image.open(io.BytesIO(await imgs.read()))
+    garm_pil = Image.open(io.BytesIO(await garm_img.read()))
+    # เตรียม dict ให้ตรงกับที่ start_tryon รับ
+    dict_obj = {"background": img_pil, "layers": [img_pil], "composite": None}
+    # แปลง string เป็น boolean
+    mask_bool = is_checked.lower() == "true"
+    crop_bool = is_checked_crop.lower() == "true"
+    # เรียกใช้ฟังก์ชันเดิม
+    result_img, mask_img = start_tryon(
+        dict_obj, garm_pil, prompt, mask_bool, crop_bool, denoise_steps, seed
+    )
+    # แปลงเป็น base64 string
+    result_b64 = pil_image_to_base64_str(result_img)
+    mask_b64 = pil_image_to_base64_str(mask_img)
+    # คืน base64 string ใน JSON
+    return JSONResponse({"result_image_base64": result_b64, "masked_image_base64": mask_b64})
+
+
 image_blocks = gr.Blocks().queue()
 with image_blocks as demo:
-    gr.Markdown("## IDM-VTON 👕👔👚")
-    gr.Markdown("Virtual Try-on with your image and garment image. Check out the [source codes](https://github.com/yisol/IDM-VTON) and the [model](https://huggingface.co/yisol/IDM-VTON)")
+    # gr.Markdown("## IDM-VTON 👕👔👚")
+    # gr.Markdown("Virtual Try-on with your image and garment image. Check out the [source codes](https://github.com/yisol/IDM-VTON) and the [model](https://huggingface.co/yisol/IDM-VTON)")
     with gr.Row():
         with gr.Column():
             imgs = gr.ImageEditor(sources='upload', type="pil", label='Human. Mask with pen or use auto-masking', interactive=True)
@@ -267,24 +311,24 @@ with image_blocks as demo:
             with gr.Row():
                 is_checked_crop = gr.Checkbox(label="Yes", info="Use auto-crop & resizing",value=False)
 
-            example = gr.Examples(
-                inputs=imgs,
-                examples_per_page=10,
-                examples=human_ex_list
-            )
+            # example = gr.Examples(
+            #     inputs=imgs,
+            #     examples_per_page=10,
+            #     examples=human_ex_list
+            # )
 
         with gr.Column():
             garm_img = gr.Image(label="Garment", sources='upload', type="pil")
             with gr.Row(elem_id="prompt-container"):
                 with gr.Row():
                     prompt = gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts", show_label=False, elem_id="prompt")
-            example = gr.Examples(
-                inputs=garm_img,
-                examples_per_page=8,
-                examples=garm_list_path)
-        with gr.Column():
+            # example = gr.Examples(
+            #     inputs=garm_img,
+            #     examples_per_page=8,
+            #     examples=garm_list_path)
+        # with gr.Column():
             # image_out = gr.Image(label="Output", elem_id="output-img", height=400)
-            masked_img = gr.Image(label="Masked image output", elem_id="masked-img",show_share_button=False)
+            # masked_img = gr.Image(label="Masked image output", elem_id="masked-img",show_share_button=False)
         with gr.Column():
             # image_out = gr.Image(label="Output", elem_id="output-img", height=400)
             image_out = gr.Image(label="Output", elem_id="output-img",show_share_button=False)
@@ -306,8 +350,8 @@ with image_blocks as demo:
         inputs=[imgs, garm_img, prompt, 
         is_checked,is_checked_crop, 
         denoise_steps, seed], 
-        outputs=[image_out,masked_img], 
-        api_name='tryon'
+        outputs=[image_out], 
+        api_name='try'
     )
 
             
