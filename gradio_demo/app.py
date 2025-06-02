@@ -369,7 +369,7 @@ with image_blocks as demo:
         tryon_base64,
         inputs=[inp_human, inp_cloth, inp_desc, inp_is_checked, inp_is_crop, inp_denoise, inp_seed],
         outputs=out_base64,
-        api_name="tryon_base64"
+        api_name="tryon"
     )
 
 
