@@ -28,13 +28,52 @@ from torchvision.transforms.functional import to_pil_image
 
 import io
 import base64
+from PIL import Image
 
-def pil_image_to_base64_str(img):
-    import io
-    import base64
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    return base64.b64encode(buf.getvalue()).decode('utf-8')
+def base64_to_pil(b64_string):
+    """Convert base64 string (text) to PIL Image."""
+    if "," in b64_string:
+        b64_string = b64_string.split(",")[1]
+    img_bytes = base64.b64decode(b64_string)
+    return Image.open(io.BytesIO(img_bytes))
+
+def pil_to_base64(img):
+    """Convert PIL Image to base64 string (text)."""
+    buffered = io.BytesIO()
+    img.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+def tryon_base64(
+    human_base64: str,
+    cloth_base64: str,
+    garment_desc: str = "Short Sleeve Round Neck T-shirts",
+    is_checked: bool = True,
+    is_checked_crop: bool = False,
+    denoise_steps: int = 30,
+    seed: int = 42
+):
+    # 1. base64 → PIL
+    human_img = base64_to_pil(human_base64).convert("RGB")
+    cloth_img = base64_to_pil(cloth_base64).convert("RGB")
+    # 2. สร้าง dict (ตาม spec ของ start_tryon)
+    dict_obj = {
+        "background": human_img,
+        "layers": [human_img],
+        "composite": None
+    }
+    # 3. เรียกใช้ start_tryon "เท่านั้น"
+    out_img, _ = start_tryon(
+        dict_obj,
+        cloth_img,
+        garment_desc,
+        is_checked,
+        is_checked_crop,
+        denoise_steps,
+        seed
+    )
+    # 4. PIL → base64
+    return pil_to_base64(out_img)
+
 
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -249,14 +288,6 @@ def start_tryon(dict,garm_img,garment_des,is_checked,is_checked_crop,denoise_ste
                         guidance_scale=2.0,
                     )[0]
 
-    # if is_checked_crop:
-    #     out_img = images[0].resize(crop_size)        
-    #     human_img_orig.paste(out_img, (int(left), int(top)))    
-    #     result_img = human_img_orig
-    # else:
-    #     result_img = images[0]
-    # return pil_image_to_base64_str(result_img)
-
     if is_checked_crop:
         out_img = images[0].resize(crop_size)        
         human_img_orig.paste(out_img, (int(left), int(top)))    
@@ -279,122 +310,73 @@ for ex_human in human_list_path:
     human_ex_list.append(ex_dict)
 
 
-from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import JSONResponse
-app = FastAPI()
-
-@app.post("/api/tryon")
-async def tryon_rest(
-    imgs: UploadFile = File(...),
-    garm_img: UploadFile = File(...),
-    prompt: str = Form("Short Sleeve Round Neck T-shirts"),
-    is_checked: str = Form("true"),
-    is_checked_crop: str = Form("false"),
-    denoise_steps: int = Form(30),
-    seed: int = Form(42),
-):
-    import traceback
-    try:
-        img_pil = Image.open(io.BytesIO(await imgs.read()))
-        garm_pil = Image.open(io.BytesIO(await garm_img.read()))
-        dict_obj = {"background": img_pil, "layers": [img_pil], "composite": None}
-        mask_bool = is_checked.lower() == "true"
-        crop_bool = is_checked_crop.lower() == "true"
-        result_b64 = start_tryon(
-            dict_obj, garm_pil, prompt, mask_bool, crop_bool, denoise_steps, seed
-        )
-        # บังคับให้เป็น str
-        if isinstance(result_b64, bytes):
-            result_b64 = result_b64.decode('utf-8')
-        return JSONResponse({"result_image_base64": result_b64})
-    except Exception as e:
-        print(traceback.format_exc())
-        return JSONResponse({"error": str(e)}, status_code=500)
-
-
-
 image_blocks = gr.Blocks().queue()
 with image_blocks as demo:
-    # gr.Markdown("## IDM-VTON 👕👔👚")
-    # gr.Markdown("Virtual Try-on with your image and garment image. Check out the [source codes](https://github.com/yisol/IDM-VTON) and the [model](https://huggingface.co/yisol/IDM-VTON)")
-    with gr.Row():
-        with gr.Column():
-            imgs = gr.ImageEditor(sources='upload', type="pil", label='Human. Mask with pen or use auto-masking', interactive=True)
-            with gr.Row():
-                is_checked = gr.Checkbox(label="Yes", info="Use auto-generated mask (Takes 5 seconds)",value=True)
-            with gr.Row():
-                is_checked_crop = gr.Checkbox(label="Yes", info="Use auto-crop & resizing",value=False)
+    # with gr.Row():
+    #     with gr.Column():
+    #         imgs = gr.ImageEditor(sources='upload', type="pil", label='Human. Mask with pen or use auto-masking', interactive=True)
+    #         with gr.Row():
+    #             is_checked = gr.Checkbox(label="Yes", info="Use auto-generated mask (Takes 5 seconds)",value=True)
+    #         with gr.Row():
+    #             is_checked_crop = gr.Checkbox(label="Yes", info="Use auto-crop & resizing",value=False)
 
-            # example = gr.Examples(
-            #     inputs=imgs,
-            #     examples_per_page=10,
-            #     examples=human_ex_list
-            # )
-
-        with gr.Column():
-            garm_img = gr.Image(label="Garment", sources='upload', type="pil")
-            # gr.ImageEditor
-            with gr.Row(elem_id="prompt-container"):
-                with gr.Row():
-                    prompt = gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts", show_label=False, elem_id="prompt")
-            # example = gr.Examples(
-            #     inputs=garm_img,
-            #     examples_per_page=8,
-            #     examples=garm_list_path)
-        with gr.Column():
-            # image_out = gr.Image(label="Output", elem_id="output-img", height=400)
-            masked_img = gr.Image(label="Masked image output", elem_id="masked-img",show_share_button=False)
-        with gr.Column():
-            # image_out = gr.Image(label="Output", elem_id="output-img", height=400)
-            image_out = gr.Image(label="Output", elem_id="output-img",show_share_button=False)
+    #     with gr.Column():
+    #         garm_img = gr.Image(label="Garment", sources='upload', type="pil")
+    #         # gr.ImageEditor
+    #         with gr.Row(elem_id="prompt-container"):
+    #             with gr.Row():
+    #                 prompt = gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts", show_label=False, elem_id="prompt")
+        
+    #     with gr.Column():
+    #         # image_out = gr.Image(label="Output", elem_id="output-img", height=400)
+    #         masked_img = gr.Image(label="Masked image output", elem_id="masked-img",show_share_button=False)
+    #     with gr.Column():
+    #         # image_out = gr.Image(label="Output", elem_id="output-img", height=400)
+    #         image_out = gr.Image(label="Output", elem_id="output-img",show_share_button=False)
 
 
 
 
-    with gr.Column():
-        try_button = gr.Button(value="Try-on")
-        with gr.Accordion(label="Advanced Settings", open=False):
-            with gr.Row():
-                denoise_steps = gr.Number(label="Denoising Steps", minimum=20, maximum=40, value=30, step=1)
-                seed = gr.Number(label="Seed", minimum=-1, maximum=2147483647, step=1, value=42)
+    # with gr.Column():
+    #     try_button = gr.Button(value="Try-on")
+    #     with gr.Accordion(label="Advanced Settings", open=False):
+    #         with gr.Row():
+    #             denoise_steps = gr.Number(label="Denoising Steps", minimum=20, maximum=40, value=30, step=1)
+    #             seed = gr.Number(label="Seed", minimum=-1, maximum=2147483647, step=1, value=42)
 
 
 
-    try_button.click(
-        fn=start_tryon, 
-        inputs=[imgs, garm_img, prompt, 
-        is_checked,is_checked_crop, 
-        denoise_steps, seed], 
-        outputs=[image_out, masked_img], 
-        api_name='try'
+    # try_button.click(
+    #     fn=start_tryon, 
+    #     inputs=[imgs, garm_img, prompt, 
+    #     is_checked,is_checked_crop, 
+    #     denoise_steps, seed], 
+    #     outputs=[image_out, masked_img], 
+    #     api_name='try'
+    # )
+
+    gr.Markdown("### Virtual Try-On: รับ base64 text 2 อัน ส่งออก base64 text (เรียก start_tryon เท่านั้น)")
+    inp_human = gr.Textbox(label="Base64 รูปคน (text)", lines=4)
+    inp_cloth = gr.Textbox(label="Base64 รูปเสื้อ (text)", lines=4)
+    inp_desc = gr.Textbox(label="คำบรรยายเสื้อ", value="Short Sleeve Round Neck T-shirts")
+    inp_is_checked = gr.Checkbox(label="Use auto-generated mask", value=True)
+    inp_is_crop = gr.Checkbox(label="Use auto-crop & resizing", value=False)
+    inp_denoise = gr.Number(label="Denoising Steps", value=30, minimum=20, maximum=40, step=1)
+    inp_seed = gr.Number(label="Seed", value=42, minimum=-1, maximum=2147483647, step=1)
+    btn = gr.Button("Try-on (Base64)")
+    out_base64 = gr.Textbox(label="Base64 ผลลัพธ์ (text)", lines=4)
+    btn.click(
+        tryon_base64,
+        inputs=[inp_human, inp_cloth, inp_desc, inp_is_checked, inp_is_crop, inp_denoise, inp_seed],
+        outputs=out_base64,
+        api_name="tryon_base64"
     )
 
 
-image_blocks.launch(share=True)
+demo.launch(share=True)
 
 
-# iface = gr.Interface(
-#     fn=start_tryon,    # ฟังก์ชันหลักที่ประมวลผล (ต้องรับ parameter ตรงกับ inputs)
-#     inputs=[
-#         gr.Image(type="pil", label="Human. Mask with pen or use auto-masking"),
-#         gr.Image(type="pil", label="Garment"),
-#         gr.Textbox(placeholder="Description of garment ex) Short Sleeve Round Neck T-shirts"),
-#         gr.Checkbox(label="Use auto-generated mask", value=True),
-#         gr.Checkbox(label="Use auto-crop & resizing", value=False),
-#         gr.Number(label="Denoising Steps", value=30, minimum=20, maximum=40, step=1),
-#         gr.Number(label="Seed", value=42, minimum=-1, maximum=2147483647, step=1)
-#     ],
-#     outputs=[
-#         gr.Image(label="Output"),
-#         gr.Image(label="Masked image output"),
-#     ],
-#     allow_flagging="never",
-#     live=False,
-#     title="IDM-VTON Try-On API",
-#     description="Try-On REST API for Virtual Try-On project."
-# )
 
-# iface.launch(share=True)
 
 
 
