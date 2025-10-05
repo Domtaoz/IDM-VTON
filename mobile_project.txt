@@ -1,0 +1,20 @@
+git clone https://github.com/Domtaoz/IDM-VTON.git
+
+python -m venv venv
+.\venv\Scripts\activate
+
+pip install -r requirements.txt
+pip install gradio==4.24.0
+pip install gradio_client==0.14.0
+pip install pydantic==2.10.6
+
+https://drive.google.com/drive/u/0/folders/1JWh8jZIAzWTOH-SarThxRtt-RyA14-zf
+โหลดทุกอันยกเว้น model.safetensors
+
+ย้ายไฟล์ model_final_162be9.pkl ไปที่ IDM-VTON/ckpt/densepose/
+ย้ายไฟล์ parsing_atr.onnx ไปที่ IDM-VTON/ckpt/humanparsing/
+ย้ายไฟล์ parsing_lip.onnx ไปที่ IDM-VTON/ckpt/humanparsing/
+ย้ายไฟล์ body_pose_model.pth ไปที่ IDM-VTON/ckpt/openpose/ckpts/
+
+
+python gradio_demo/app.py
